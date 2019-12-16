@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset = "utf-8">
+<meta name = "viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Food Deserts in Appalachia, OH</title>
+<style>
+html, body{
+padding:0;
+margin:0;
+height:100%;
+width:100%
+}
+
+#mapContainer{
+padding:0;
+margin:0;
+height:100%;
+width:100%
+}
+ 
+    #titleDiv{
+float:top;
+margin:0;
+height:15%;
+width:100%;
+text-align: center;
+background-color: dimgray;
+font-size: 20pt;
+line-height: 125px;
+        
+}
+    #map{
+float:bottom;
+padding:0;
+margin:0;
+height:85%;
+width:100%}
+    
+ #viewDiv{
+float:right;
+padding:0;
+margin:0;
+height:100%;
+width:80%
+}   
+    #legendDiv {
+        
+      float: left;
+        left: 0;
+        margin: 0;
+        height: 100%;
+        width: 19.5%;
+        background-color: dimgray;
+    }
+    #legendDiv1 {
+        padding: 0;
+        float: bottom;
+        left: 0;
+        margin: 0;
+        height: 85%;
+        width: 100%;
+        
+    }
+     #searchDiv {
+        padding: 0;
+        float: top;
+        left: 0;
+        margin: 0;
+        height: 14.5%;
+        width: 100%;
+    }
+        
+    #overviewDiv {
+        position:absolute;
+        bottom: 12px;
+        right: 12px;
+        width: 400px;
+        height: 500px;
+        border: 1px solid black;
+        z-index: 100;
+    }
+    #extentDiv {
+        border 2px;
+        position: absolute;
+        z-index: 2;
+    }
+  
+      
+    
+</style>
+<link rel="stylesheet" href="https://js.arcgis.com/4.12/esri/css/main.css">
+    <script src="https://js.arcgis.com/4.12/"></script>
+    <script>
+    require([
+    "esri/config",
+    "esri/core/watchUtils",
+    "esri/layers/WebTileLayer",
+    "esri/Map",
+    "esri/Basemap",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/widgets/Legend",
+    "esri/widgets/Search",
+    "esri/widgets/LayerList",
+    "esri/geometry/Point",
+    "dojo/domReady!"
+        
+ ], function( 
+      esriConfig,watchUtils,WebTileLayer,Map, Basemap,MapView,FeatureLayer, Legend,Search,LayerList,Point)
+            {
+        
+    var mymap = new Map({
+             basemap: "topo"
+                    });
+                        
+     var myView = new MapView({
+             map: mymap,
+             center: [-81.63,39.90],
+             container: "viewDiv",
+             zoom:8 
+         
+     
+          });
+        
+        var percentbelowpoverty = new FeatureLayer({
+            portalItem:{
+                id:"1ee033f7beea434a942262d3e9758599"
+            },
+            title: "Percent of people below poverty level"
+        });
+        mymap.add(percentbelowpoverty);
+        
+    
+        var stores = new FeatureLayer  ({
+                     portalItem:{
+                 id:"44b234afa85444659cd615c725ea4a5d"
+                },
+             title:"Retailers"
+                 });
+         mymap.add(stores);
+        
+        
+         var fooddesert = new FeatureLayer ({
+            portalItem:{
+                id:"27dfb4c5e54b42d8b137d11613fcb8f9"
+            },
+           title:"Food Deserts", 
+             opacity: 0.5 
+         });
+        mymap.add(fooddesert);
+        
+                     var overviewmap = new Map ({ 
+         basemap: "topo"
+            }); 
+        var smallview = new MapView({
+        container: "overviewDiv",
+        center: [-82,40],
+        zoom:7,
+        map: overviewmap,
+         
+        constraints: {
+            rotationEnabled: false
+        }
+        });
+        smallview.ui.components = [];
+        
+         var popdensity = new FeatureLayer ({
+            portalItem: {
+                id:"d96f7a263a4840ecb8686d086807e56e",
+            },
+             title: "Population Density"
+             
+        });
+        overviewmap.add(popdensity);
+        
+                const LegendList = new LayerList({
+            view: myView,
+            container: "legendDiv",
+            listItemCreatedFunction: function(event){
+                const item = event.item;
+                if (item.layer.type !="group"){
+                    item.panel = {
+                        content: "legend",
+                        open: true,
+                        
+                    };
+                }
+            }
+        });
+        
+          const LegendList2 = new LayerList({
+            view: smallview,
+            container: "legendDiv",
+            listItemCreatedFunction: function(event){
+                const item = event.item;
+                if (item.layer.type !="group"){
+                    item.panel = {
+                        content: "legend",
+                        open: true,
+                        
+                    };
+                }
+            }
+        });
+            var searchWidget = new Search ({
+                view: myView,
+                container: "searchDiv"
+            });
+           
+
+        var ExtentDiv = 
+        document.getElementById("extentDiv");
+        
+        smallview.when(function(){   
+myview.watch("extent", updateOverviewExtent); 
+           smallview.watch("extent", 
+            updateOverviewExtent);
+        });
+       
+        watchUtils.when(myview, "stationary",  
+        updateoverview);
+            
+            function updateoverview(){   
+           smallview.goTo ({   
+           center: myview.center,   
+          scale: myview.scale * 2 * Math.max   
+         (myview.width /   
+         smallview.width,   
+       myview.height / smallview.height)   
+});   
+}
+            function updateOverviewExtent() { 
+                var extent = myView.extent;
+   
+    var bottomLeft = smallview.toScreen(new  Point ({
+    x: extent.xmin,
+    y: extent.ymin,
+    spatialReference: extent.spatialReference})
+    );
+    var topRight = smallview.toScreen(new  Point ({
+    x: extent.xmax,
+    y: extent.ymax,
+    spatialReference: extent.spatialReference})
+    );
+   
+    extentDiv.style.top = topRight.y + "px";
+    extentDiv.style.left = bottomLeft.x + "px";
+   
+    extentDiv.style.height = (bottomLeft.y - topRight.y) + "px";
+    extentDiv.style.width = (topRight.x - bottomLeft.x) + "px";
+   
+    };
+    });
+    
+             
+        
+    
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+   
+        
+       
+      
+         
+
+    
+    
+        
+    </script>  
+</head>
+<body>
+<div id = "mapContainer">
+<div id = "titleDiv">Food Deserts In Appalachia, OH</div>
+<div id = "map"> 
+    <div id="viewDiv"><div id = "overviewDiv"><div id = "extentDiv">
+        </div></div></div>
+    <div id = "legendDiv"><div id = "legendDiv1"></div><div id = "searchDiv"></div></div></div></div>
+
+</body>
+</html>
